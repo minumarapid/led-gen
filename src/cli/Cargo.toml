@@ -1,0 +1,9 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+led_core = { package = "core", path = "../core", features = ["cli"] }
+clap = { version = "4.4", features = ["derive"] }
+image = "0.25.10"

@@ -1,0 +1,28 @@
+{
+  "name": "led-gen",
+  "version": "0.1.0",
+  "description": "A high-performance library that includes WASM code to convert images into an LED-style appearance.",
+  "author": "minumarapid",
+  "license": "MIT",
+  "packageManager": "pnpm@11.1.2",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3"
+  }
+}

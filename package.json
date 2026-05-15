@@ -1,0 +1,11 @@
+{
+  "name": "led-gen",
+  "version": "0.0.1",
+  "description": "A high-performance library that includes WASM code to convert images into an LED-style appearance.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "minumarapid",
+  "license": "ISC"
+}
