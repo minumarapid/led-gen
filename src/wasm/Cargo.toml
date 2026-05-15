@@ -1,5 +1,5 @@
 [package]
-name = "led-gen"
+name = "wasm"
 version = "0.1.0"
 authors = ["minumarapid <contact@o38.me>"]
 edition = "2018"
