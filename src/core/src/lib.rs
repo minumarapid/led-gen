@@ -43,7 +43,7 @@ pub enum LedShape {
 
 #[cfg_attr(feature = "cli", derive(clap::Args))]
 #[derive(Clone, Debug, Deserialize, Tsify)]
-#[serde(default)]
+#[serde(default, rename_all = "camelCase")]
 #[tsify(from_wasm_abi)]
 pub struct LedConfig {
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_BORDER))]
