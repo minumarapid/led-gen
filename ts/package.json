@@ -1,8 +1,8 @@
 {
   "name": "led-gen",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A high-performance library that includes WASM code to convert images into an LED-style appearance.",
-  "author": "minumarapid",
+  "author": "minumarapid <contact@o38.me>",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@11.1.2",
@@ -17,6 +17,22 @@
   "files": [
     "dist"
   ],
+  "keywords": [
+    "image-processing",
+    "wasm",
+    "webassembly",
+    "led",
+    "canvas",
+    "rust"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minumarapid/led-gen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/minumarapid/led-gen/issues"
+  },
+  "homepage": "https://github.com/minumarapid/led-gen#readme",
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
     "postbuild": "shx cp ../src/wasm/pkg/*.wasm dist/"
