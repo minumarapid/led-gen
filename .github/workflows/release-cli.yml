@@ -4,6 +4,9 @@ on:
     tags:
       - 'cli@*'
 
+permissions:
+  contents: write
+
 jobs:
   build-cli:
     name: Build CLI on ${{ matrix.os }}
