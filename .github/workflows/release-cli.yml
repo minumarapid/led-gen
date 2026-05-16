@@ -32,9 +32,6 @@ jobs:
         - name: Set up Rust
           uses: dtolnay/rust-toolchain@stable
 
-        - name: Rust Cache
-          uses: Swatinem/rust-cache@v2
-
         - name: Build CLI
           run: cargo build --release --manifest-path src/cli/Cargo.toml --target ${{ matrix.target }}
 
