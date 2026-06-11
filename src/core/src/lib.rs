@@ -201,10 +201,21 @@ pub fn generate_led_image(original_img:image::RgbImage, led_config: &LedConfig )
         let strength = led_config.glow_strength;
         let glow_blurred_raw = glow_blurred.as_raw();
 
+        // let blend_pixel = |base_pixel: &mut [u8], glow_pixel: &[u8]| {
+        //     base_pixel[0] = ((base_pixel[0] as f32) + (glow_pixel[0] as f32 * strength)).clamp(0.0, 255.0) as u8;
+        //     base_pixel[1] = ((base_pixel[1] as f32) + (glow_pixel[1] as f32 * strength)).clamp(0.0, 255.0) as u8;
+        //     base_pixel[2] = ((base_pixel[2] as f32) + (glow_pixel[2] as f32 * strength)).clamp(0.0, 255.0) as u8;
+        // };
+
         let blend_pixel = |base_pixel: &mut [u8], glow_pixel: &[u8]| {
-            base_pixel[0] = ((base_pixel[0] as f32) + (glow_pixel[0] as f32 * strength)).clamp(0.0, 255.0) as u8;
-            base_pixel[1] = ((base_pixel[1] as f32) + (glow_pixel[1] as f32 * strength)).clamp(0.0, 255.0) as u8;
-            base_pixel[2] = ((base_pixel[2] as f32) + (glow_pixel[2] as f32 * strength)).clamp(0.0, 255.0) as u8;
+            for i in 0..3 {
+                // グロー成分の計算
+                let glow_val = (glow_pixel[i] as f32 * strength).clamp(0.0, 255.0);
+                let base_val = base_pixel[i] as f32;
+
+                // スクリーン合成公式: 255 - ((255 - Base) * (255 - Glow) / 255)
+                base_pixel[i] = (255.0 - ((255.0 - base_val) * (255.0 - glow_val) / 255.0)) as u8;
+            }
         };
 
         #[cfg(not(target_arch = "wasm32"))]
