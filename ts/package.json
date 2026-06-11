@@ -1,6 +1,6 @@
 {
   "name": "led-gen",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "A high-performance library that includes WASM code to convert images into an LED-style appearance.",
   "author": "minumarapid <contact@o38.me>",
   "license": "MIT",
