@@ -13,7 +13,9 @@ pub const DEFAULT_ENABLE_GLOW: bool = true;
 pub const DEFAULT_GLOW_RANGE: f32 = 3.0;
 pub const DEFAULT_GLOW_STRENGTH: f32 = 1.75;
 pub const DEFAULT_GLOW_EXPOSURE: f32 = 1.0;
-pub const DEFAULT_OFF_LIGHT_COLOR: [u8; 3] = [50, 50, 50];
+pub const DEFAULT_OFF_LIGHT_COLOR: [u8; 3] = [64, 64, 64];
+
+pub const DEFAULT_CANVAS_BACKGROUND: [u8; 3] = [16, 16, 16];
 
 pub const DEFAULT_LED_SHAPE: LedShape = LedShape::Circle;
 
@@ -74,8 +76,11 @@ pub struct LedConfig {
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_GLOW_EXPOSURE))]
     pub glow_exposure: f32,
 
-    #[cfg_attr(feature = "cli", arg(long, value_parser = parse_off_light_color, default_value = "50,50,50"))]
+    #[cfg_attr(feature = "cli", arg(long, value_parser = parse_off_light_color, default_value = "64,64,64"))]
     pub off_light_color: [u8; 3],
+
+    #[cfg_attr(feature = "cli", arg(long, value_parser = parse_off_light_color, default_value = "16,16,16"))]
+    pub canvas_background: [u8; 3],
 }
 
 impl Default for LedConfig {
@@ -91,6 +96,7 @@ impl Default for LedConfig {
             glow_strength: DEFAULT_GLOW_STRENGTH,
             glow_exposure: DEFAULT_GLOW_EXPOSURE,
             off_light_color: DEFAULT_OFF_LIGHT_COLOR,
+            canvas_background: DEFAULT_CANVAS_BACKGROUND,
         }
     }
 }
@@ -116,7 +122,11 @@ pub fn generate_led_image(original_img:image::RgbImage, led_config: &LedConfig )
     let canvas_width = content_width + led_config.border * 2;
     let canvas_height = content_height + led_config.border * 2;
 
-    let mut base_canvas = image::RgbImage::new(canvas_width, canvas_height);
+    let mut base_canvas = image::RgbImage::from_pixel(
+        canvas_width,
+        canvas_height,
+        image::Rgb(led_config.canvas_background),
+    );
     let mut glow_canvas = image::RgbImage::new(canvas_width, canvas_height);
     let bytes_per_row = canvas_width as usize * 3;
 
@@ -161,9 +171,11 @@ pub fn generate_led_image(original_img:image::RgbImage, led_config: &LedConfig )
                 if alpha > 0.0 {
                     let pixel_pos = (led_config.border + canvas_base_x + sx) as usize * 3;
 
-                    base_row[pixel_pos]     = (target_base[0] * alpha) as u8;
-                    base_row[pixel_pos + 1] = (target_base[1] * alpha) as u8;
-                    base_row[pixel_pos + 2] = (target_base[2] * alpha) as u8;
+                    let bg = led_config.canvas_background;
+
+                    base_row[pixel_pos]     = ((target_base[0] * alpha) + (bg[0] as f32 * (1.0 - alpha))) as u8;
+                    base_row[pixel_pos + 1] = ((target_base[1] * alpha) + (bg[1] as f32 * (1.0 - alpha))) as u8;
+                    base_row[pixel_pos + 2] = ((target_base[2] * alpha) + (bg[2] as f32 * (1.0 - alpha))) as u8;
 
                     glow_row[pixel_pos]     = (target_glow[0] * alpha) as u8;
                     glow_row[pixel_pos + 1] = (target_glow[1] * alpha) as u8;
