@@ -20,7 +20,7 @@ const rgbColorSchema = z.tuple([
 
 const LedConfigSchema = z.object({
   border: z.number().int("Border must be an integer").min(0,"Border must be a non-negative integer").optional(),
-  ledSize: z.number().int("LED size must be an integer").min(0,"LED size must be a non-negative integer").optional(),
+  ledSize: z.number().int("LED size must be an integer").min(1,"LED size must be a positive integer").optional(),
   ledGap: z.number().int("LED gap must be an integer").min(0,"LED gap must be a non-negative integer").optional(),
   ledShape: z.enum(["Circle", "Square"]).optional(),
   ledExposure: z.number().min(0,"LED exposure must be a non-negative number").optional(),
