@@ -122,9 +122,11 @@ pub fn generate_led_image(original_img:image::RgbImage, led_config: &LedConfig )
     let canvas_width = content_width + led_config.border * 2;
     let canvas_height = content_height + led_config.border * 2;
 
-    let mut base_canvas = image::RgbImage::from_fn(canvas_width, canvas_height, |_, _| {
-        image::Rgb(led_config.canvas_background)
-    });
+    let mut base_canvas = image::RgbImage::from_pixel(
+        canvas_width,
+        canvas_height,
+        image::Rgb(led_config.canvas_background),
+    );
     let mut glow_canvas = image::RgbImage::new(canvas_width, canvas_height);
     let bytes_per_row = canvas_width as usize * 3;
 
