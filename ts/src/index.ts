@@ -3,17 +3,7 @@ import { z } from 'zod';
 
 export type { LedConfig, InitInput, LedShape };
 
-const LedConfigSchema = z.object({
-  border: z.number().int("Border must be an integer").min(0,"Border must be a non-negative integer").optional(),
-  ledSize: z.number().int("LED size must be an integer").min(0,"LED size must be a non-negative integer").optional(),
-  ledGap: z.number().int("LED gap must be an integer").min(0,"LED gap must be a non-negative integer").optional(),
-  ledShape: z.enum(["Circle", "Square"]).optional(),
-  ledExposure: z.number().min(0,"LED exposure must be a non-negative number").optional(),
-  enableGlow: z.boolean().optional(),
-  glowRange: z.number().min(0,"Glow range must be a non-negative number").optional(),
-  glowStrength: z.number().min(0,"Glow strength must be a non-negative number").optional(),
-  glowExposure: z.number().min(0,"Glow exposure must be a non-negative number").optional(),
-  offLightColor: z.tuple([
+const rgbColorSchema = z.tuple([
     z.number()
       .int("Red must be an integer")
       .min(0,"Red must be a number between 0 and 255")
@@ -26,7 +16,20 @@ const LedConfigSchema = z.object({
       .int("Blue must be an integer")
       .min(0,"Blue must be a number between 0 and 255")
       .max(255,"Blue must be a number between 0 and 255")
-  ]).optional(),
+  ]).optional();
+
+const LedConfigSchema = z.object({
+  border: z.number().int("Border must be an integer").min(0,"Border must be a non-negative integer").optional(),
+  ledSize: z.number().int("LED size must be an integer").min(0,"LED size must be a non-negative integer").optional(),
+  ledGap: z.number().int("LED gap must be an integer").min(0,"LED gap must be a non-negative integer").optional(),
+  ledShape: z.enum(["Circle", "Square"]).optional(),
+  ledExposure: z.number().min(0,"LED exposure must be a non-negative number").optional(),
+  enableGlow: z.boolean().optional(),
+  glowRange: z.number().min(0,"Glow range must be a non-negative number").optional(),
+  glowStrength: z.number().min(0,"Glow strength must be a non-negative number").optional(),
+  glowExposure: z.number().min(0,"Glow exposure must be a non-negative number").optional(),
+  offLightColor: rgbColorSchema,
+  canvasBackground: rgbColorSchema
 })
 
 export class LedGenerator {
