@@ -37,9 +37,12 @@ pub fn parse_off_light_color(value: &str) -> Result<[u8; 3], String> {
 
 #[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
 #[derive(Clone, Debug, Deserialize, Tsify)]
+#[serde(rename_all = "camelCase")]
 #[tsify(from_wasm_abi)]
 pub enum LedShape {
+    #[serde(alias = "Square")]
     Square,
+    #[serde(alias = "Circle")]
     Circle,
 }
 
@@ -52,34 +55,43 @@ pub struct LedConfig {
     pub border: u32,
 
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_LED_SIZE))]
+    #[serde(alias = "led_size")]
     pub led_size: u32,
 
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_LED_GAP))]
-
+    #[serde(alias = "led_gap")]
     pub led_gap: u32,
 
     #[cfg_attr(feature = "cli", arg(long, value_enum, default_value_t = DEFAULT_LED_SHAPE))]
+    #[serde(alias = "led_shape")]
     pub led_shape: LedShape,
 
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_LED_EXPOSURE))]
+    #[serde(alias = "led_exposure")]
     pub led_exposure: f32,
 
     #[cfg_attr(feature = "cli", arg(long = "no-glow", action = clap::ArgAction::SetFalse))]
+    #[serde(alias = "enable_glow")]
     pub enable_glow: bool,
 
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_GLOW_RANGE))]
+    #[serde(alias = "glow_range")]
     pub glow_range: f32,
 
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_GLOW_STRENGTH))]
+    #[serde(alias = "glow_strength")]
     pub glow_strength: f32,
 
     #[cfg_attr(feature = "cli", arg(long, default_value_t = DEFAULT_GLOW_EXPOSURE))]
+    #[serde(alias = "glow_exposure")]
     pub glow_exposure: f32,
 
     #[cfg_attr(feature = "cli", arg(long, value_parser = parse_off_light_color, default_value = "64,64,64"))]
+    #[serde(alias = "off_light_color")]
     pub off_light_color: [u8; 3],
 
     #[cfg_attr(feature = "cli", arg(long, value_parser = parse_off_light_color, default_value = "16,16,16"))]
+    #[serde(alias = "canvas_background")]
     pub canvas_background: [u8; 3],
 }
 
