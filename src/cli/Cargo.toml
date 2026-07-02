@@ -7,3 +7,4 @@ edition = "2021"
 led_core = { package = "core", path = "../core", features = ["cli"] }
 clap = { version = "4.4", features = ["derive"] }
 image = "0.25.10"
+toml = "0.8"

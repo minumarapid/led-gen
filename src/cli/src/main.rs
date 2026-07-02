@@ -1,3 +1,5 @@
+mod utils;
+
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io::Cursor;
@@ -6,6 +8,7 @@ use std::path::{Path, PathBuf};
 use clap::{Parser, ValueEnum};
 use image::ImageReader;
 use led_core::{generate_led_image, LedConfig, LedError};
+use utils::{load_config, CliLedConfig};
 
 #[derive(Parser)]
 #[command(author, version, about = "A tool for converting images into an LED-style look")]
@@ -21,8 +24,12 @@ struct Cli {
     #[arg(short, long, value_enum)]
     format: Option<OutputFormat>,
 
+    /// Config file path
+    #[arg(short, long, value_hint = clap::ValueHint::FilePath)]
+    config: Option<PathBuf>,
+
     #[command(flatten)]
-    config: LedConfig,
+    led_config: CliLedConfig,
 }
 
 #[derive(Copy, Clone, Debug, ValueEnum)]
@@ -115,7 +122,14 @@ fn main() {
 fn run() -> Result<(), LedError> {
     let cli = Cli::parse();
 
-    let config = cli.config;
+    let mut config = if let Some(config_file_path) = cli.config.as_deref() {
+        load_config(config_file_path)?
+    } else if Path::new("led-gen.config.toml").exists() {
+        load_config(Path::new("led-gen.config.toml"))?
+    } else {
+        LedConfig::default()
+    };
+    cli.led_config.apply_to(&mut config);
 
     let binary = fs::read(&cli.input)
         .map_err(|e| LedError::FailedDecode(format!("Unable to read the input file ({})", e)))?;

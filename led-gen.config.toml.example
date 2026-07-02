@@ -1,0 +1,11 @@
+border = 10
+led_size = 4
+led_gap = 2
+led_shape = "circle"
+led_exposure = 1.0
+enable_glow = true
+glow_range = 3.0
+glow_strength = 1.75
+glow_exposure = 1.0
+off_light_color = [64, 64, 64]
+canvas_background = [16, 16, 16]
