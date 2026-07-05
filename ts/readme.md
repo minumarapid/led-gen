@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/led-gen.svg?style=flat-square)](https://www.npmjs.com/package/led-gen)
 ![npm package minimized gzipped size](https://img.shields.io/bundlejs/size/led-gen?style=flat-square)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![License: BSD-2-Clause](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg?style=flat-square)](https://opensource.org/licenses/BSD-2-Clause)
 
 `led-gen` is a TypeScript wrapper around a Rust/WebAssembly image processor for
 converting browser `ImageData` into an LED-style image.
