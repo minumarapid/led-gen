@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "A high-performance library that includes WASM code to convert images into an LED-style appearance.",
   "author": "minumarapid <contact@o38.me>",
-  "license": "MIT",
+  "license": "BSD-2-Clause",
   "type": "module",
   "packageManager": "pnpm@11.1.2",
   "main": "./dist/index.js",
