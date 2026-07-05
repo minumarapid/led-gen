@@ -89,4 +89,4 @@ pnpm run build
 
 ## License
 
-BSD 2-Clause License. See [LICENSE](LICENSE) for details.
+BSD 2-Clause License. See [LICENSE](../LICENSE) for details.
