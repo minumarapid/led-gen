@@ -4,17 +4,21 @@
 ![npm package minimized gzipped size](https://img.shields.io/bundlejs/size/led-gen?style=flat-square)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-A high-performance library that includes WASM code to convert images into an LED-style appearance.
+`led-gen` is a TypeScript wrapper around a Rust/WebAssembly image processor for
+converting browser `ImageData` into an LED-style image.
 
 ## Before / After
 
 ### Original image
+
 ![Original image](https://github.com/minumarapid/led-gen/blob/master/test/input-0001.png?raw=true)
 
 ### LED-style image
+
 ![LED-style image](https://github.com/minumarapid/led-gen/blob/master/test/output-0001.png?raw=true)
 
 ## Installation
+
 ```bash
 # npm
 npm install led-gen
@@ -23,37 +27,66 @@ npm install led-gen
 pnpm add led-gen
 ```
 
-## Features
-- Fast image processing using WebAssembly (WASM) for performance-critical code.
-- Configurable LED grid generation with options for LED size, gap, shape, and glow effects.
-- Simple syntax through encapsulation
-
 ## Quick Start
-```typescript
-import { LedGenerator } from 'led-gen';
 
-// Example: convert an HTMLCanvas ImageData to an LED-style image
-const imageData = srcCtx.getImageData(0, 0, img.width, img.height);
-const result = await LedGenerator.processImageData(imageData, {
-  ledShape: "Square",
+```ts
+import { LedGenerator } from "led-gen";
+
+const source = ctx.getImageData(0, 0, image.width, image.height);
+const result = await LedGenerator.processImageData(source, {
+  ledShape: "Circle",
+  ledSize: 4,
+  ledGap: 2,
   enableGlow: true,
 });
+
+ctx.putImageData(result, 0, 0);
 ```
 
-## Configuration options
+`LedGenerator.processImageData` initializes the WASM module automatically. If
+your bundler needs an explicit WASM URL or module input, initialize it first:
 
-| Name            | Type                       | Default        | Description |
-|-----------------|----------------------------|----------------|-------------|
-| `border`        | `number`                   | `10`           | Margin around the generated LED grid (pixels). |
-| `ledSize`       | `number`                   | `4`            | Diameter/side length of each LED (pixels). |
-| `ledGap`        | `number`                   | `2`            | Spacing between LEDs (pixels). |
-| `ledShape`      | `"Square" \| "Circle"`     | `"Circle"`     | Shape of individual LEDs. |
-| `ledExposure`   | `number`                   | `1.0`          | Exposure (gamma) applied to LED brightness. |
-| `enableGlow`    | `boolean`                  | `true`         | Enable glow/halo effect around LEDs. |
-| `glowRange`     | `number`                   | `3.0`          | Radius (in LED units) of the glow effect. |
-| `glowStrength`  | `number`                   | `1.75`         | Intensity of the glow effect. |
-| `glowExposure`  | `number`                   | `1.0`          | Exposure (gamma) for the glow layer. |
-| `offLightColor` | `[number, number, number]` | `[50, 50, 50]` | Minimum RGB color used when an LED is off (dark baseline). |
+```ts
+await LedGenerator.initialize(wasmUrl);
+```
+
+## API
+
+### `LedGenerator.initialize(moduleOrPath?)`
+
+Initializes the WASM module. Calling this more than once is safe.
+
+### `LedGenerator.processImageData(imageData, config?)`
+
+Converts an `ImageData` object and returns a new `ImageData` object. The input is
+treated as RGBA data; the generated output is also RGBA.
+
+## Configuration Options
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `border` | `number` | `10` | Margin around the generated LED grid in pixels. |
+| `ledSize` | `number` | `4` | Diameter or side length of each LED in pixels. |
+| `ledGap` | `number` | `2` | Spacing between LEDs in pixels. |
+| `ledShape` | `"Circle" \| "Square"` | `"Circle"` | Shape of each LED. |
+| `ledExposure` | `number` | `1.0` | Exposure multiplier applied to the LED color layer. |
+| `enableGlow` | `boolean` | `true` | Enables the glow layer. |
+| `glowRange` | `number` | `3.0` | Blur radius for the glow layer. |
+| `glowStrength` | `number` | `1.75` | Strength multiplier for the glow layer. |
+| `glowExposure` | `number` | `1.0` | Exposure multiplier applied to the glow layer. |
+| `offLightColor` | `[number, number, number]` | `[64, 64, 64]` | Minimum RGB color used for each LED. |
+| `canvasBackground` | `[number, number, number]` | `[16, 16, 16]` | RGB background color for the generated canvas. |
+
+## Development
+
+Build the WASM package first, then build the TypeScript wrapper:
+
+```bash
+wasm-pack build ../src/wasm --target web
+pnpm install
+pnpm run build
+```
 
 ## License
-MIT
+
+BSD 2-Clause License. See [LICENSE](LICENSE) for details.
