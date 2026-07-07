@@ -41,17 +41,17 @@ Returns a `ProcessedImageResult` with `width`, `height`, and RGBA `data`.
 `LedConfig` is defined in the shared Rust core and exported to TypeScript via
 `tsify`.
 
-| Name | Default |
-|------|---------|
-| `border` | `10` |
-| `ledSize` | `4` |
-| `ledGap` | `2` |
-| `ledShape` | `"Circle"` |
-| `ledExposure` | `1.0` |
-| `enableGlow` | `true` |
-| `glowRange` | `3.0` |
-| `glowStrength` | `1.75` |
-| `glowExposure` | `1.0` |
+| Name | Default        |
+|------|----------------|
+| `border` | `10`           |
+| `ledSize` | `4`            |
+| `ledGap` | `2`            |
+| `ledShape` | `"circle"`     |
+| `ledExposure` | `1.0`          |
+| `enableGlow` | `true`         |
+| `glowRange` | `3.0`          |
+| `glowStrength` | `1.75`         |
+| `glowExposure` | `1.0`          |
 | `offLightColor` | `[64, 64, 64]` |
 | `canvasBackground` | `[16, 16, 16]` |
 
