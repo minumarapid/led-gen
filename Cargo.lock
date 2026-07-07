@@ -623,7 +623,7 @@ checksum = "7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8"
 
 [[package]]
 name = "led-gen-cli"
-version = "0.2.1-dev3"
+version = "0.2.1"
 dependencies = [
  "clap",
  "image",
@@ -633,7 +633,7 @@ dependencies = [
 
 [[package]]
 name = "led-gen-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "image",
