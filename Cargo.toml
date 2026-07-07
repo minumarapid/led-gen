@@ -1,7 +1,20 @@
 [workspace]
 members = [
-    "src/cli",
-    "src/core",
-    "src/wasm",
+    "crates/led-gen-cli",
+    "crates/led-gen-core",
+    "crates/led-gen-wasm",
 ]
 resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "BSD-2-Clause"
+repository = "https://github.com/minumarapid/led-gen"
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

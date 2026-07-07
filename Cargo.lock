@@ -312,19 +312,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core"
-version = "0.2.0"
-dependencies = [
- "clap",
- "image",
- "rayon",
- "serde",
- "tiny-skia",
- "tsify",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "crc32fast"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -635,13 +622,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a79a3332a6609480d7d0c9eab957bca6b455b91bb84e66d19f5ff66294b85b8"
 
 [[package]]
-name = "led-gen"
+name = "led-gen-cli"
+version = "0.2.1-dev3"
+dependencies = [
+ "clap",
+ "image",
+ "led-gen-core",
+ "toml",
+]
+
+[[package]]
+name = "led-gen-core"
 version = "0.2.0"
 dependencies = [
  "clap",
- "core",
  "image",
- "toml",
+ "rayon",
+ "serde",
+ "tiny-skia",
+ "tsify",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "led-gen-wasm"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "image",
+ "js-sys",
+ "led-gen-core",
+ "serde-wasm-bindgen",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
 ]
 
 [[package]]
@@ -1361,19 +1374,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20064672db26d7cdc89c7798c48a0fdfac8213434a1186e5ef29fd560ae223d6"
 dependencies = [
  "wit-bindgen",
-]
-
-[[package]]
-name = "wasm"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "core",
- "image",
- "js-sys",
- "serde-wasm-bindgen",
- "wasm-bindgen",
- "wasm-bindgen-test",
 ]
 
 [[package]]

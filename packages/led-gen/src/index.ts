@@ -1,4 +1,4 @@
-import wasmInit, {generate_led_image_wasm, type InitInput, type LedConfig, type LedShape} from "../../src/wasm/pkg";
+import wasmInit, {generate_led_image_wasm, type InitInput, type LedConfig, type LedShape} from "../../../crates/led-gen-wasm/pkg";
 import { z } from 'zod';
 
 export type { LedConfig, InitInput, LedShape };

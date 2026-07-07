@@ -8,10 +8,10 @@ the WebAssembly/TypeScript package.
 
 | Path | Package | Purpose |
 |------|---------|---------|
-| `src/core` | `core` | Shared Rust image-processing implementation. |
-| `src/cli` | `led-gen` | Command-line image converter. |
-| `src/wasm` | `wasm` | wasm-bindgen bindings for the Rust core. |
-| `ts` | `led-gen` | TypeScript wrapper around the generated WASM package. |
+| `crates/led-gen-core` | `led-gen-core` | Shared Rust image-processing implementation. |
+| `crates/led-gen-cli` | `led-gen-cli` | Command-line image converter. |
+| `crates/led-gen-wasm` | `led-gen-wasm` | wasm-bindgen bindings for the Rust core. |
+| `packages/led-gen` | `led-gen` | TypeScript wrapper around the generated WASM package. |
 
 ## Before / After
 
@@ -28,13 +28,13 @@ the WebAssembly/TypeScript package.
 Run the CLI from the workspace:
 
 ```bash
-cargo run -p led-gen -- test/input-0001.png --output test/output.png
+cargo run -p led-gen-cli -- test/input-0001.png --output test/output.png
 ```
 
 Useful options:
 
 ```bash
-cargo run -p led-gen -- input.png \
+cargo run -p led-gen-cli -- input.png \
   --output output.png \
   --format png \
   --led-size 4 \
@@ -47,7 +47,7 @@ The CLI reads `led-gen.config.toml` from the current directory when it exists.
 Use `--config <path>` to load a specific config file. CLI options override
 values from the config file.
 
-See [src/cli/readme.md](src/cli/readme.md) for the full CLI documentation.
+See [crates/led-gen-cli/readme.md](crates/led-gen-cli/readme.md) for the full CLI documentation.
 
 ## TypeScript Usage
 
@@ -73,7 +73,7 @@ const result = await LedGenerator.processImageData(source, {
 ctx.putImageData(result, 0, 0);
 ```
 
-See [ts/readme.md](ts/readme.md) for TypeScript API details.
+See [packages/led-gen/readme.md](packages/led-gen/readme.md) for TypeScript API details.
 
 ## Development
 
@@ -86,8 +86,8 @@ cargo check
 Build the WebAssembly package before building the TypeScript wrapper:
 
 ```bash
-wasm-pack build src/wasm --target web
-cd ts
+wasm-pack build crates/led-gen-wasm --target web
+cd packages/led-gen
 pnpm install
 pnpm run build
 ```

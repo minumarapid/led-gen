@@ -38,7 +38,7 @@ jobs:
             targets: ${{ matrix.target }}
 
         - name: Build CLI
-          run: cargo build --release --manifest-path src/cli/Cargo.toml --target ${{ matrix.target }}
+          run: cargo build --release -p led-gen-cli --target ${{ matrix.target }}
 
         - name: Rename Binary (Linux/Mac)
           if: matrix.os != 'windows-latest'
