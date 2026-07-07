@@ -2,7 +2,7 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 
-use led_core::{generate_led_image, LedConfig};
+use led_gen_core::{generate_led_image, LedConfig};
 
 use js_sys::Uint8Array;
 

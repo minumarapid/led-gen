@@ -82,7 +82,7 @@ treated as RGBA data; the generated output is also RGBA.
 Build the WASM package first, then build the TypeScript wrapper:
 
 ```bash
-wasm-pack build ../src/wasm --target web
+wasm-pack build ../../crates/led-gen-wasm --target web
 pnpm install
 pnpm run build
 ```

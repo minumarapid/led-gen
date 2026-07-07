@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 
 use clap::Args;
-use led_core::{parse_off_light_color, LedConfig, LedError, LedShape};
+use led_gen_core::{parse_off_light_color, LedConfig, LedError, LedShape};
 
 #[derive(Args, Clone, Debug, Default)]
 pub struct CliLedConfig {

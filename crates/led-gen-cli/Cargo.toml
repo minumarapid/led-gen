@@ -1,0 +1,14 @@
+[package]
+name = "led-gen-cli"
+version = "0.2.1-dev3"
+edition = "2021"
+
+[[bin]]
+name = "led-gen"
+path = "src/main.rs"
+
+[dependencies]
+led-gen-core = { path = "../led-gen-core", features = ["cli"] }
+clap = { version = "4.4", features = ["derive"] }
+image = "0.25.10"
+toml = "0.8"

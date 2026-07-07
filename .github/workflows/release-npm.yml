@@ -38,14 +38,14 @@ jobs:
           package-manager-cache: false
 
       - name: Build WASM
-        run: wasm-pack build ./src/wasm --target web
+        run: wasm-pack build ./crates/led-gen-wasm --target web
 
       - name: TS Install & Build
-        working-directory: ./ts
+        working-directory: ./packages/led-gen
         run: |
           pnpm install
           pnpm build 
 
       - name: Publish to npm
-        working-directory: ./ts
+        working-directory: ./packages/led-gen
         run: pnpm publish --no-git-checks

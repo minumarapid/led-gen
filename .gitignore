@@ -2,3 +2,6 @@
 .idea
 .env
 .env.*
+.pnpm-store
+node_modules
+.vscode

@@ -6,7 +6,9 @@ settings:
 
 importers:
 
-  .:
+  .: {}
+
+  packages/led-gen:
     dependencies:
       zod:
         specifier: ^4.4.3

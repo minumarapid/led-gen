@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use clap::{Parser, ValueEnum};
 use image::ImageReader;
-use led_core::{generate_led_image, LedConfig, LedError};
+use led_gen_core::{generate_led_image, LedConfig, LedError};
 use utils::{load_config, CliLedConfig};
 
 #[derive(Parser)]

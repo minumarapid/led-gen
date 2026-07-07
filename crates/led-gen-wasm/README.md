@@ -13,10 +13,10 @@ wasm-pack build --target web
 When building from the repository root:
 
 ```bash
-wasm-pack build src/wasm --target web
+wasm-pack build crates/led-gen-wasm --target web
 ```
 
-The generated package is written to `src/wasm/pkg`. The TypeScript wrapper
+The generated package is written to `crates/led-gen-wasm/pkg`. The TypeScript wrapper
 imports from that generated package during its build.
 
 ## Exported API

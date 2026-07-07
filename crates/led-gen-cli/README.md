@@ -6,13 +6,13 @@ rendering.
 ## Usage
 
 ```bash
-cargo run -p led-gen -- <input> [options]
+cargo run -p led-gen-cli -- <input> [options]
 ```
 
 Example:
 
 ```bash
-cargo run -p led-gen -- test/input-0001.png --output test/output.png --format png
+cargo run -p led-gen-cli -- test/input-0001.png --output test/output.png --format png
 ```
 
 ## Options
@@ -66,17 +66,17 @@ cp led-gen.config.toml.example led-gen.config.toml
 Write next to the input with an inferred file name:
 
 ```bash
-cargo run -p led-gen -- input.png
+cargo run -p led-gen-cli -- input.png
 ```
 
 Write to a directory:
 
 ```bash
-cargo run -p led-gen -- input.png --output ./dist
+cargo run -p led-gen-cli -- input.png --output ./dist
 ```
 
 Use a config file and override one value:
 
 ```bash
-cargo run -p led-gen -- input.png --config led-gen.config.toml --led-size 6
+cargo run -p led-gen-cli -- input.png --config led-gen.config.toml --led-size 6
 ```
