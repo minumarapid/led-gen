@@ -34,7 +34,7 @@ import { LedGenerator } from "led-gen";
 
 const source = ctx.getImageData(0, 0, image.width, image.height);
 const result = await LedGenerator.processImageData(source, {
-  ledShape: "Circle",
+  ledShape: "circle",
   ledSize: 4,
   ledGap: 2,
   enableGlow: true,
@@ -63,17 +63,17 @@ treated as RGBA data; the generated output is also RGBA.
 
 ## Configuration Options
 
-| Name | Type | Default | Description |
-|------|------|---------|-------------|
-| `border` | `number` | `10` | Margin around the generated LED grid in pixels. |
-| `ledSize` | `number` | `4` | Diameter or side length of each LED in pixels. |
-| `ledGap` | `number` | `2` | Spacing between LEDs in pixels. |
-| `ledShape` | `"Circle" \| "Square"` | `"Circle"` | Shape of each LED. |
-| `ledExposure` | `number` | `1.0` | Exposure multiplier applied to the LED color layer. |
-| `enableGlow` | `boolean` | `true` | Enables the glow layer. |
-| `glowRange` | `number` | `3.0` | Blur radius for the glow layer. |
-| `glowStrength` | `number` | `1.75` | Strength multiplier for the glow layer. |
-| `glowExposure` | `number` | `1.0` | Exposure multiplier applied to the glow layer. |
+| Name | Type                       | Default        | Description |
+|------|----------------------------|----------------|-------------|
+| `border` | `number`                   | `10`           | Margin around the generated LED grid in pixels. |
+| `ledSize` | `number`                   | `4`            | Diameter or side length of each LED in pixels. |
+| `ledGap` | `number`                   | `2`            | Spacing between LEDs in pixels. |
+| `ledShape` | `"circle" \| "square"`     | `"circle"`     | Shape of each LED. |
+| `ledExposure` | `number`                   | `1.0`          | Exposure multiplier applied to the LED color layer. |
+| `enableGlow` | `boolean`                  | `true`         | Enables the glow layer. |
+| `glowRange` | `number`                   | `3.0`          | Blur radius for the glow layer. |
+| `glowStrength` | `number`                   | `1.75`         | Strength multiplier for the glow layer. |
+| `glowExposure` | `number`                   | `1.0`          | Exposure multiplier applied to the glow layer. |
 | `offLightColor` | `[number, number, number]` | `[64, 64, 64]` | Minimum RGB color used for each LED. |
 | `canvasBackground` | `[number, number, number]` | `[16, 16, 16]` | RGB background color for the generated canvas. |
 

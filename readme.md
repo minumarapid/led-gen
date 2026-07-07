@@ -64,8 +64,9 @@ import { LedGenerator } from "led-gen";
 
 const source = ctx.getImageData(0, 0, image.width, image.height);
 const result = await LedGenerator.processImageData(source, {
-  ledShape: "Circle",
+  ledShape: "circle",
   ledSize: 4,
+  ledGap: 2,
   enableGlow: true,
 });
 
