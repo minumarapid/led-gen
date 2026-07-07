@@ -40,11 +40,10 @@ jobs:
       - name: Build WASM
         run: wasm-pack build ./crates/led-gen-wasm --target web
 
-      - name: TS Install & Build
-        working-directory: ./packages/led-gen
+      - name: Build Package
         run: |
-          pnpm install
-          pnpm build 
+          pnpm install --frozen-lockfile
+          pnpm build:pkg
 
       - name: Publish to npm
         working-directory: ./packages/led-gen
