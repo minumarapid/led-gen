@@ -37,9 +37,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
-      - name: Build WASM
-        run: wasm-pack build ./crates/led-gen-wasm --target web
-
       - name: Build Package
         run: |
           pnpm install --frozen-lockfile
