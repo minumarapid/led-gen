@@ -4,6 +4,7 @@ use tiny_skia::{FillRule, Paint, PathBuilder, Pixmap, Rect, Transform};
 use serde::Deserialize;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
+use thiserror::Error;
 
 pub const DEFAULT_BORDER: u32 = 10;
 pub const DEFAULT_LED_SIZE: u32 = 4;
@@ -113,9 +114,18 @@ impl Default for LedConfig {
     }
 }
 
+#[derive(Debug, Error)]
 pub enum LedError {
+    #[error("failed to decode image: {0}")]
     FailedDecode(String),
+
+    #[error("invalid config: {0}")]
     InvalidConfiguration(String),
+
+    #[error("image processing failed: {0}")]
+    FailedImageProcessing(String),
+
+    #[error("failed to encode image: {0}")]
     FailedEncode(String)
 }
 

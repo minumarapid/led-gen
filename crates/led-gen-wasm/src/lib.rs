@@ -49,11 +49,11 @@ pub fn generate_led_image_wasm(
     }
 
     let original_img = image::RgbImage::from_raw(width, height, raw_rgb)
-        .ok_or_else(|| JsValue::from_str("画像バッファの構築に失敗しました"))?;
+        .ok_or_else(|| JsValue::from_str("failed to create ImageBuffer"))?;
 
 
     let processed_img = generate_led_image(original_img, &config)
-        .map_err(|e| JsValue::from_str("LED画像の生成エラー"))?;
+        .map_err(|e| JsValue::from_str(&format!("failed to generate LED image: {e}")))?;
 
     let (out_width, out_height) = processed_img.dimensions();
     let mut out_rgba = Vec::with_capacity((out_width * out_height * 4) as usize);
