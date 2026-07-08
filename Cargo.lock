@@ -639,6 +639,7 @@ dependencies = [
  "image",
  "rayon",
  "serde",
+ "thiserror",
  "tiny-skia",
  "tsify",
  "wasm-bindgen",

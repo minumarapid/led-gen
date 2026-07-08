@@ -110,11 +110,7 @@ fn resolve_output_path(input: &Path, output: Option<PathBuf>, format: Option<Out
 
 fn main() {
     if let Err(e) = run() {
-        match e {
-            LedError::FailedDecode(msg) => eprintln!("Error: Decoding failed ({})", msg),
-            LedError::InvalidConfiguration(msg) => eprintln!("Error: The configuration is invalid ({})", msg),
-            LedError::FailedEncode(msg) => eprintln!("Error: Encoding failed ({})", msg),
-        }
+        eprintln!("Error: {e}");
         std::process::exit(1);
     }
 }
