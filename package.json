@@ -1,12 +1,16 @@
 {
   "name": "led-gen-workspace",
-  "packageManager": "pnpm@11.1.2",
+  "packageManager": "pnpm@11.12.0",
   "scripts": {
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",
-
     "build:pkg": "pnpm --filter led-gen build",
-    "typecheck:pkg": "pnpm --filter led-gen typecheck"
-  },
-  "devDependencies": {}
+    "build:desktop": "pnpm --filter desktop build",
+    "build:web": "pnpm --filter web build",
+    "dev:desktop": "pnpm --filter desktop dev:desktop",
+    "dev:web": "pnpm --filter web dev",
+    "typecheck:pkg": "pnpm --filter led-gen typecheck",
+    "typecheck:desktop": "pnpm --filter desktop typecheck",
+    "typecheck:web": "pnpm --filter web typecheck"
+  }
 }

@@ -3,6 +3,7 @@ members = [
     "crates/led-gen-cli",
     "crates/led-gen-core",
     "crates/led-gen-wasm",
+    "apps/desktop/src-tauri",
 ]
 resolver = "2"
 
