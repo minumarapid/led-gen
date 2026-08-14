@@ -2,11 +2,11 @@ mod utils;
 
 use std::ffi::{OsStr, OsString};
 use std::fs;
-use std::io::Cursor;
+use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
 
 use clap::{Parser, ValueEnum};
-use image::ImageReader;
+use image::{ImageReader, RgbImage};
 use led_gen_core::{generate_led_image, LedConfig, LedError};
 use utils::{load_config, CliLedConfig};
 
@@ -14,7 +14,7 @@ use utils::{load_config, CliLedConfig};
 #[command(author, version, about = "A tool for converting images into an LED-style look")]
 struct Cli {
     /// input image path
-    input: PathBuf,
+    input: Option<PathBuf>,
 
     /// export image path (If no file name is specified, append "_led" to the output)
     #[arg(short, long)]
@@ -115,6 +115,68 @@ fn main() {
     }
 }
 
+fn process_image(config: LedConfig, binary: Vec<u8>) -> Result<RgbImage, LedError> {
+
+    let original_img = ImageReader::new(Cursor::new(binary))
+        .with_guessed_format().map_err(|e| { LedError::FailedDecode(e.to_string()) })?
+        .decode().map_err(|e| { LedError::FailedDecode(e.to_string()) })?
+        .into_rgb8();
+
+    generate_led_image(original_img, &config)
+}
+
+fn read_input(input: Option<&Path>) -> Result<Vec<u8>, LedError> {
+    match input {
+        Some(path) => fs::read(path)
+            .map_err(|e| LedError::FailedDecode(
+                format!("Unable to read the input file ({e})")
+            )),
+        None => {
+            let mut buffer = Vec::new();
+            std::io::stdin()
+                .read_to_end(&mut buffer)
+                .map_err(|e| LedError::FailedDecode(
+                    format!("Unable to read from stdin ({e})")
+                ))?;
+            Ok(buffer)
+        }
+    }
+}
+
+fn write_to_stdout(image: RgbImage, format: Option<OutputFormat>) -> Result<(), LedError> {
+    let mut buffer = Vec::new();
+    if let Some(format) = format {
+        let dynamic = image::DynamicImage::ImageRgb8(image);
+        dynamic.write_to(&mut Cursor::new(&mut buffer), format.to_image_format())
+            .map_err(|e| LedError::FailedEncode(format!("Failed to encode the output image ({})", e)))?;
+    } else {
+        image.write_to(&mut Cursor::new(&mut buffer), image::ImageFormat::Png)
+            .map_err(|e| LedError::FailedEncode(format!("Failed to encode the output image ({})", e)))?;
+    }
+    std::io::stdout().write_all(&buffer)
+        .map_err(|e| LedError::FailedEncode(format!("Failed to write to stdout ({})", e)))?;
+    Ok(())
+}
+
+fn write_to_file(output_path: &Path, image: RgbImage, format: Option<OutputFormat>) -> Result<(), LedError> {
+    let write_result = if let Some(format) = format {
+        let dynamic = image::DynamicImage::ImageRgb8(image);
+        dynamic.save_with_format(&output_path, format.to_image_format())
+    } else {
+        image.save(&output_path)
+    };
+    write_result.map_err(|e| LedError::FailedEncode(format!("Failed to write the output file ({})", e)))?;
+    println!("Success: Output to {}", output_path.display());
+    Ok(())
+}
+
+fn write_output(output_path: Option<&Path>, image: RgbImage, format: Option<OutputFormat>) -> Result<(), LedError> {
+    match output_path {
+        Some(path) => write_to_file(path, image, format),
+        None => write_to_stdout(image, format),
+    }
+}
+
 fn run() -> Result<(), LedError> {
     let cli = Cli::parse();
 
@@ -127,26 +189,18 @@ fn run() -> Result<(), LedError> {
     };
     cli.led_config.apply_to(&mut config);
 
-    let binary = fs::read(&cli.input)
-        .map_err(|e| LedError::FailedDecode(format!("Unable to read the input file ({})", e)))?;
+    let binary = read_input(cli.input.as_deref())?;
+    let output_path = cli.output
+        .or_else(|| cli.input.as_deref().map(|path| resolve_output_path(
+            path,
+            None,
+            cli.format,
+        )));
 
-    let original_img = ImageReader::new(Cursor::new(binary))
-        .with_guessed_format().map_err(|e| { LedError::FailedDecode(e.to_string()) })?
-        .decode().map_err(|e| { LedError::FailedDecode(e.to_string()) })?
-        .into_rgb8();
+    write_output(
+        output_path.as_deref(),
+        process_image(config, binary)?,
+        cli.format)?;
 
-    let result = generate_led_image(original_img, &config)?;
-
-    let output_path = resolve_output_path(&cli.input, cli.output, cli.format);
-
-    let write_result = if let Some(format) = cli.format {
-        let dynamic = image::DynamicImage::ImageRgb8(result);
-        dynamic.save_with_format(&output_path, format.to_image_format())
-    } else {
-        result.save(&output_path)
-    };
-
-    write_result.map_err(|e| LedError::FailedEncode(format!("Failed to write the output file ({})", e)))?;
-    println!("Success: Output to {}", output_path.display());
     Ok(())
 }
