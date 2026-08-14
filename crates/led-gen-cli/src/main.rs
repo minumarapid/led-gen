@@ -190,9 +190,12 @@ fn run() -> Result<(), LedError> {
     cli.led_config.apply_to(&mut config);
 
     let binary = read_input(cli.input.as_deref())?;
-    let output_path = cli.input
-        .as_deref()
-        .map(|path| resolve_output_path(path, cli.output, cli.format));
+    let output_path = cli.output
+        .or_else(|| cli.input.as_deref().map(|path| resolve_output_path(
+            path,
+            None,
+            cli.format,
+        )));
 
     write_output(
         output_path.as_deref(),
