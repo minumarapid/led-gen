@@ -12,3 +12,4 @@ led-gen-core = { path = "../led-gen-core", features = ["cli"] }
 clap = { version = "4.4", features = ["derive"] }
 image = "0.25.10"
 toml = "0.8"
+tempfile = "3.27.0"
