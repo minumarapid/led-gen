@@ -80,3 +80,31 @@ Use a config file and override one value:
 ```bash
 cargo run -p led-gen-cli -- input.png --config led-gen.config.toml --led-size 6
 ```
+
+## Animation (ffmpeg)
+
+The CLI detects a concatenated PPM/PGM stream (leading `P6`/`P5` magic) on
+stdin and switches to frame-streaming mode automatically. No extra flags and no
+`--width`/`--height` are needed. `led-gen` never decodes video itself;
+ffmpeg handles containers, codecs, and frame rates on both ends:
+
+```bash
+ffmpeg -i input.mp4 -f image2pipe -vcodec ppm - \
+  | cargo run -q -p led-gen-cli -- \
+  | ffmpeg -f image2pipe -i - -c:v libx264 -pix_fmt yuv420p -crf 18 -preset medium -an output.mp4
+```
+
+Notes:
+
+* LED options and `--config` work exactly like for still images. `--format`
+  is ignored for streams (stream output is always ppm).
+* Stream detection is stdin-only: a `.ppm`/`.pgm` file argument is always
+  treated as one still image (so `--format` keeps working for stills). To
+  stream a concatenated file, pipe it through stdin
+  (`led-gen < video.ppm` or `cat video.ppm | led-gen`).
+* `image2pipe` carries no timestamps, so pass `-framerate`/`-r` explicitly
+  on both ffmpeg ends when the frame rate matters.
+* Audio is up to you; `-an` above drops it.
+* Shell caveat on Windows: `cmd.exe` and Git Bash pipe binary safely. On
+  PowerShell, pipe via `Get-Content in.png -AsByteStream -Raw | ... |
+  Set-Content out.png -AsByteStream` instead of `cat`/`>`.
