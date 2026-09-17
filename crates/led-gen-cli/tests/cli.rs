@@ -1,5 +1,5 @@
-use std::process::{Command, Stdio};
 use std::io::Write;
+use std::process::{Command, Stdio};
 
 #[test]
 fn stdin_to_stdout() {
@@ -12,12 +12,7 @@ fn stdin_to_stdout() {
         .spawn()
         .unwrap();
 
-    child
-        .stdin
-        .as_mut()
-        .unwrap()
-        .write_all(input)
-        .unwrap();
+    child.stdin.as_mut().unwrap().write_all(input).unwrap();
 
     let output = child.wait_with_output().unwrap();
 
@@ -45,12 +40,7 @@ fn stdin_to_file() {
         .spawn()
         .unwrap();
 
-    child
-        .stdin
-        .as_mut()
-        .unwrap()
-        .write_all(input)
-        .unwrap();
+    child.stdin.as_mut().unwrap().write_all(input).unwrap();
 
     let output = child.wait_with_output().unwrap();
 
