@@ -279,9 +279,13 @@ fn run() -> Result<(), LedError> {
         None => Box::new(BufReader::new(std::io::stdin())),
     };
 
-    // A leading `P6`/`P5` means a concatenated ppm/pgm stream
-    // (`ffmpeg -f image2pipe -vcodec ppm -`); anything else is one still image.
-    if ppm::looks_like_ppm_stream(&mut input)? {
+    // A leading `P6`/`P5` on *stdin* means a concatenated ppm/pgm stream
+    // (`ffmpeg -f image2pipe -vcodec ppm -`); anything else is one still
+    // image. Detection is stdin-only so that `.ppm`/`.pgm` file arguments
+    // keep working as stills (with `--format` honored). To stream a
+    // concatenated file, pipe it through stdin instead.
+    let is_stream = cli.input.is_none() && ppm::looks_like_ppm_stream(&mut input)?;
+    if is_stream {
         if cli.format.is_some() {
             eprintln!("Warning: --format is ignored for ppm streams (output is always ppm)");
         }

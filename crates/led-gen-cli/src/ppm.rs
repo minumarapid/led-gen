@@ -43,7 +43,12 @@ fn decode_one_frame<R: BufRead + ?Sized>(
 
     match decoder.color_type() {
         image::ColorType::Rgb8 => {
-            let mut buf = vec![0u8; decoder.total_bytes() as usize];
+            let total = usize::try_from(decoder.total_bytes()).map_err(|_| {
+                LedError::FailedDecode(format!(
+                    "Frame {frame_no} is too large to decode on this platform"
+                ))
+            })?;
+            let mut buf = vec![0u8; total];
             decoder
                 .read_image(&mut buf)
                 .map_err(|e| {
@@ -54,7 +59,12 @@ fn decode_one_frame<R: BufRead + ?Sized>(
             }).map(Some)
         }
         image::ColorType::L8 => {
-            let mut gray = vec![0u8; decoder.total_bytes() as usize];
+            let total = usize::try_from(decoder.total_bytes()).map_err(|_| {
+                LedError::FailedDecode(format!(
+                    "Frame {frame_no} is too large to decode on this platform"
+                ))
+            })?;
+            let mut gray = vec![0u8; total];
             decoder
                 .read_image(&mut gray)
                 .map_err(|e| {
@@ -139,8 +149,10 @@ pub fn run_ppm_stream<R: BufRead + ?Sized, W: Write>(
                     if batch_size.is_none() {
                         let (w, h) = frame.dimensions();
                         let (cw, ch) = pipeline.output_dimensions(w, h);
-                        // base + glow canvases per frame.
-                        let bytes = cw as u64 * ch as u64 * 3 * 2;
+                        // base + glow canvases per frame. Saturating: absurd
+                        // dimensions clamp the batch to a single frame instead
+                        // of overflowing and defeating the memory cap.
+                        let bytes = (cw as u64).saturating_mul(ch as u64).saturating_mul(3 * 2);
                         batch_size = Some(parallel_batch_size(Some(bytes)));
                     }
                     batch.push(frame);

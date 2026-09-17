@@ -83,8 +83,8 @@ cargo run -p led-gen-cli -- input.png --config led-gen.config.toml --led-size 6
 
 ## Animation (ffmpeg)
 
-The CLI detects a concatenated PPM/PGM stream (leading `P6`/`P5` magic) on its input
-and switches to frame-streaming mode automatically. No extra flags and no
+The CLI detects a concatenated PPM/PGM stream (leading `P6`/`P5` magic) on
+stdin and switches to frame-streaming mode automatically. No extra flags and no
 `--width`/`--height` are needed. `led-gen` never decodes video itself;
 ffmpeg handles containers, codecs, and frame rates on both ends:
 
@@ -98,6 +98,10 @@ Notes:
 
 * LED options and `--config` work exactly like for still images. `--format`
   is ignored for streams (stream output is always ppm).
+* Stream detection is stdin-only: a `.ppm`/`.pgm` file argument is always
+  treated as one still image (so `--format` keeps working for stills). To
+  stream a concatenated file, pipe it through stdin
+  (`led-gen < video.ppm` or `cat video.ppm | led-gen`).
 * `image2pipe` carries no timestamps, so pass `-framerate`/`-r` explicitly
   on both ffmpeg ends when the frame rate matters.
 * Audio is up to you; `-an` above drops it.
