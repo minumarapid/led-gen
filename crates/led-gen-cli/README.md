@@ -83,7 +83,7 @@ cargo run -p led-gen-cli -- input.png --config led-gen.config.toml --led-size 6
 
 ## Animation (ffmpeg)
 
-The CLI detects a concatenated PPM stream (leading `P6` magic) on its input
+The CLI detects a concatenated PPM/PGM stream (leading `P6`/`P5` magic) on its input
 and switches to frame-streaming mode automatically. No extra flags and no
 `--width`/`--height` are needed. `led-gen` never decodes video itself;
 ffmpeg handles containers, codecs, and frame rates on both ends:

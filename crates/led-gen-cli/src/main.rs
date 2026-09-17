@@ -268,9 +268,10 @@ fn run() -> Result<(), LedError> {
     };
     cli.led_config.apply_to(&mut config);
 
-    // Buffer the input up front so the ppm magic (`P6`) can be peeked at
-    // without consuming anything. Files and stdin share this path, which
-    // keeps single-image behavior identical while enabling streaming.
+    // Buffer the input up front so the ppm/pgm magic (`P6`/`P5`) can be
+    // peeked at without consuming anything. Files and stdin share this
+    // path, which keeps single-image behavior identical while enabling
+    // streaming.
     let mut input: Box<dyn BufRead> = match cli.input.as_deref() {
         Some(path) => Box::new(BufReader::new(fs::File::open(path).map_err(|e| {
             LedError::FailedDecode(format!("Unable to read the input file ({e})"))
@@ -278,7 +279,7 @@ fn run() -> Result<(), LedError> {
         None => Box::new(BufReader::new(std::io::stdin())),
     };
 
-    // A leading `P6` means a concatenated ppm stream
+    // A leading `P6`/`P5` means a concatenated ppm/pgm stream
     // (`ffmpeg -f image2pipe -vcodec ppm -`); anything else is one still image.
     if ppm::looks_like_ppm_stream(&mut input)? {
         if cli.format.is_some() {

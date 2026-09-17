@@ -4,14 +4,15 @@ use image::codecs::pnm::{PnmDecoder, PnmEncoder, PnmSubtype, SampleEncoding};
 use image::{ExtendedColorType, ImageDecoder, RgbImage};
 use led_gen_core::{LedConfig, LedError, LedPipeline};
 
-/// Peek at the buffered input and report whether it looks like a binary PPM
-/// (`image2pipe -vcodec ppm`) stream. The check is non-consuming: the peeked
-/// bytes stay in the buffer for the actual decoder.
+/// Peek at the buffered input and report whether it looks like a binary
+/// PNM (`image2pipe -vcodec ppm`) stream: RGB `P6` frames or grayscale `P5`
+/// frames. The check is non-consuming: the peeked bytes stay in the buffer
+/// for the actual decoder.
 pub fn looks_like_ppm_stream<R: BufRead + ?Sized>(reader: &mut R) -> Result<bool, LedError> {
     let peek = reader
         .fill_buf()
         .map_err(|e| LedError::FailedDecode(format!("Unable to read from the input ({e})")))?;
-    Ok(peek.len() >= 2 && peek[0] == b'P' && peek[1] == b'6')
+    Ok(peek.len() >= 2 && peek[0] == b'P' && (peek[1] == b'6' || peek[1] == b'5'))
 }
 
 fn decode_one_frame<R: BufRead + ?Sized>(
@@ -97,10 +98,9 @@ fn encode_one_frame<W: Write>(
 
 /// Number of frames converted concurrently.
 ///
-/// Follows the CPU count (rayon pool size when initialized, otherwise
-/// `available_parallelism`), clamped so one batch never holds more than
-/// ~512MB of output canvas bytes. Frame order is unaffected: batches are
-/// still written sequentially.
+/// Follows the CPU count via `std::thread::available_parallelism`, clamped
+/// so one batch never holds more than ~512MB of output canvas bytes. Frame
+/// order is unaffected: batches are still written sequentially.
 fn parallel_batch_size(canvas_bytes_per_frame: Option<u64>) -> usize {
     let cpus = std::thread::available_parallelism()
         .map(|n| n.get())
@@ -231,6 +231,17 @@ mod tests {
         };
         assert_eq!(&remaining[..2], b"P6");
 
+        // Grayscale PGM (`P5`) streams are detected too, without consuming.
+        let mut pgm = std::io::BufReader::new(&b"P5\n2 1\n255\nAB"[..]);
+        assert!(looks_like_ppm_stream(&mut pgm).unwrap());
+        let remaining: Vec<u8> = {
+            let mut v = Vec::new();
+            use std::io::Read;
+            pgm.read_to_end(&mut v).unwrap();
+            v
+        };
+        assert_eq!(&remaining[..2], b"P5");
+
         let mut png = std::io::BufReader::new(&b"\x89PNG\r\n\x1a\n0000"[..]);
         assert!(!looks_like_ppm_stream(&mut png).unwrap());
 
@@ -313,6 +324,29 @@ mod tests {
         assert_eq!((decoded[1].0, decoded[1].1), (2, 1));
         assert_eq!(decoded[0].2, frame_a);
         assert_eq!(decoded[1].2, frame_b);
+    }
+
+    #[test]
+    fn streams_grayscale_p5_frames() {
+        // Grayscale frames are expanded to RGB triplets; with the identity
+        // config the output must equal the expanded input.
+        let mut input = Vec::new();
+        input.extend_from_slice(b"P5\n2 1\n255\n");
+        input.extend_from_slice(&[10u8, 200]);
+        input.extend_from_slice(b"P5\n1 2\n255\n");
+        input.extend_from_slice(&[0u8, 255]);
+
+        let mut reader = std::io::BufReader::new(&input[..]);
+        let mut output = Vec::new();
+        let frames = run_ppm_stream(&mut reader, &mut output, &test_config()).unwrap();
+        assert_eq!(frames, 2);
+
+        let decoded = decode_all_frames(&output);
+        assert_eq!(decoded.len(), 2);
+        assert_eq!((decoded[0].0, decoded[0].1), (2, 1));
+        assert_eq!((decoded[1].0, decoded[1].1), (1, 2));
+        assert_eq!(decoded[0].2, [10u8, 10, 10, 200, 200, 200]);
+        assert_eq!(decoded[1].2, [0u8, 0, 0, 255, 255, 255]);
     }
 
     #[test]

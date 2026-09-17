@@ -12,7 +12,8 @@ license = "BSD-2-Clause"
 repository = "https://github.com/minumarapid/led-gen"
 
 [profile.release]
-# Tell `rustc` to optimize for small code size.
+# Optimize for speed on native targets. Binary size for the browser build
+# is contained via the per-package override for led-gen-wasm below.
 opt-level = 3
 lto = true
 codegen-units = 1
