@@ -248,6 +248,28 @@ impl LedPipeline {
         let base_content = &mut base_raw[top_offset..top_offset + content_len];
         let glow_content = &mut glow_raw[top_offset..top_offset + content_len];
 
+        // Per-source-pixel colors, computed once per frame. The row loop
+        // below visits each source row `led_size` times (once per canvas
+        // row), so folding the LUT + off-light max in here removes that
+        // redundant work. u8 max + later exact u8->f32 cast keeps results
+        // bit-identical to the inline computation.
+        let input_raw = original_img.as_raw();
+        let pixel_count = width as usize * height as usize;
+        let mut base_table = vec![0u8; pixel_count * 3];
+        let mut glow_table = vec![0u8; pixel_count * 3];
+        for (i, px) in input_raw.chunks_exact(3).enumerate() {
+            let rgb = [px[0], px[1], px[2]];
+            let base_color = base_lut.apply(&rgb);
+            let glow_color = glow_lut.apply(&rgb);
+            let o = i * 3;
+            base_table[o] = base_color[0].max(led_config.off_light_color[0]);
+            base_table[o + 1] = base_color[1].max(led_config.off_light_color[1]);
+            base_table[o + 2] = base_color[2].max(led_config.off_light_color[2]);
+            glow_table[o] = glow_color[0];
+            glow_table[o + 1] = glow_color[1];
+            glow_table[o + 2] = glow_color[2];
+        }
+
         let process_row = |content_y: usize, base_row: &mut [u8], glow_row: &mut [u8]| {
             let content_y = content_y as u32;
             let original_y = content_y / step;
@@ -257,22 +279,20 @@ impl LedPipeline {
                 return;
             }
 
+            let table_row = original_y as usize * width as usize * 3;
             for original_x in 0..width {
-                let rgb = original_img.get_pixel(original_x, original_y).0;
-
-                let base_color = base_lut.apply(&rgb);
-                let glow_color = glow_lut.apply(&rgb);
+                let t = table_row + original_x as usize * 3;
 
                 let target_base = [
-                    (base_color[0] as f32).max(led_config.off_light_color[0] as f32),
-                    (base_color[1] as f32).max(led_config.off_light_color[1] as f32),
-                    (base_color[2] as f32).max(led_config.off_light_color[2] as f32),
+                    base_table[t] as f32,
+                    base_table[t + 1] as f32,
+                    base_table[t + 2] as f32,
                 ];
 
                 let target_glow = [
-                    glow_color[0] as f32,
-                    glow_color[1] as f32,
-                    glow_color[2] as f32,
+                    glow_table[t] as f32,
+                    glow_table[t + 1] as f32,
+                    glow_table[t + 2] as f32,
                 ];
 
                 let canvas_base_x = original_x * step;
@@ -332,12 +352,24 @@ impl LedPipeline {
         }
 
         if led_config.enable_glow && led_config.glow_range > 0.0 {
-            let glow_blurred = self.blur_glow(&glow_canvas);
+            let glow_blurred = self.blur_glow(&glow_canvas, parallel)?;
 
             let strength = led_config.glow_strength;
             let glow_blurred_raw = glow_blurred.as_raw();
+            // Screen blend with black glow is the identity (screen(b, 0)
+            // == b: the float chain collapses to exactly `b`), so gap and
+            // border pixels can skip the math. Only valid for finite
+            // strength, since 0 * NaN/inf is NaN rather than 0.
+            let finite_strength = strength.is_finite();
 
             let blend_pixel = |base_pixel: &mut [u8], glow_pixel: &[u8]| {
+                if finite_strength
+                    && glow_pixel[0] == 0
+                    && glow_pixel[1] == 0
+                    && glow_pixel[2] == 0
+                {
+                    return;
+                }
                 for i in 0..3 {
                     let glow_val = (glow_pixel[i] as f32 * strength).clamp(0.0, 255.0);
                     let base_val = base_pixel[i] as f32;
@@ -382,22 +414,74 @@ impl LedPipeline {
         Ok(base_canvas)
     }
 
-    fn blur_glow(&self, glow_canvas: &image::RgbImage) -> image::RgbImage {
-        #[cfg(not(target_arch = "wasm32"))]
+    fn blur_glow(
+        &self,
+        glow_canvas: &image::RgbImage,
+        parallel: bool,
+    ) -> Result<image::RgbImage, LedError> {
+        // Same sigma and kernel size the image crate derives from
+        // `glow_range`, but executed by libblur's SIMD separable gaussian
+        // (analytical kernel, clamped edges) instead of the scalar one.
+        // `FixedPoint` keeps ~1-3% error at ~2x the speed of `Exact`.
+        let (width, height) = glow_canvas.dimensions();
+        let kernel = gaussian_kernel_radius(self.config.glow_range).max(1) * 2 + 1;
+        let src = libblur::BlurImage::borrow(
+            glow_canvas.as_raw(),
+            width,
+            height,
+            libblur::FastBlurChannels::Channels3,
+        );
+        let mut dst_buf = vec![0u8; glow_canvas.as_raw().len()];
         {
-            blur_rgb_parallel(glow_canvas, self.config.glow_range)
+            let mut dst = libblur::BlurImageMut::borrow(
+                &mut dst_buf,
+                width,
+                height,
+                libblur::FastBlurChannels::Channels3,
+            );
+            libblur::gaussian_blur(
+                &src,
+                &mut dst,
+                libblur::GaussianBlurParams::new(kernel, self.config.glow_range as f64),
+                libblur::EdgeMode2D::new(libblur::EdgeMode::Clamp),
+                blur_threading_policy(parallel),
+                libblur::ConvolutionMode::FixedPoint,
+            )
+            .map_err(|e| LedError::FailedImageProcessing(format!("glow blur failed: {e}")))?;
         }
-        #[cfg(target_arch = "wasm32")]
-        {
-            image::imageops::blur(glow_canvas, self.config.glow_range)
-        }
+        image::RgbImage::from_raw(width, height, dst_buf).ok_or_else(|| {
+            LedError::FailedImageProcessing("glow blur output size mismatch".to_string())
+        })
     }
+}
+
+/// Threading policy for the glow blur.
+///
+/// Single-frame `generate` runs its own rayon row pass first and the blur
+/// afterwards, so the blur may use the pool (`Adaptive`). Inside
+/// `process_batch` each frame already occupies a worker thread, so the blur
+/// must stay single-threaded to avoid oversubscription. wasm32 is always
+/// single-threaded.
+#[cfg(not(target_arch = "wasm32"))]
+fn blur_threading_policy(parallel: bool) -> libblur::ThreadingPolicy {
+    if parallel {
+        libblur::ThreadingPolicy::Adaptive
+    } else {
+        libblur::ThreadingPolicy::Single
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn blur_threading_policy(_parallel: bool) -> libblur::ThreadingPolicy {
+    libblur::ThreadingPolicy::Single
 }
 
 /// Radius (in pixels) of the 1-D gaussian kernel that
 /// `image::imageops::blur` builds for `sigma`.
 ///
 /// Mirrors `GaussianBlurParameters::kernel_size_from_sigma` in image 0.25.
+/// Kept as the user-facing `glow_range` (sigma) to libblur-radius mapping so
+/// the setting keeps its meaning after the backend swap.
 fn gaussian_kernel_radius(sigma: f32) -> u32 {
     let possible_size = ((((sigma - 0.8) / 0.3) + 1.0) * 2.0 + 1.0).max(3.0) as u32;
     let kernel_size = if possible_size.is_multiple_of(2) {
@@ -406,56 +490,6 @@ fn gaussian_kernel_radius(sigma: f32) -> u32 {
         possible_size
     };
     kernel_size / 2
-}
-
-/// Parallel gaussian blur with output identical to `image::imageops::blur`.
-///
-/// The image is split into full-width horizontal strips, each carrying
-/// `halo` rows of overlap top/bottom. Every output pixel is therefore
-/// computed from exactly the same input neighbourhood (clamped edges behave
-/// identically) as a whole-image blur, so results are bit-identical while
-/// strips blur concurrently on the rayon pool.
-#[cfg(not(target_arch = "wasm32"))]
-fn blur_rgb_parallel(image: &image::RgbImage, sigma: f32) -> image::RgbImage {
-    let (width, height) = image.dimensions();
-    let strip_count = (rayon::current_num_threads().max(1) as u32)
-        .min(height.max(1))
-        .max(1);
-    if strip_count <= 1 {
-        return image::imageops::blur(image, sigma);
-    }
-    let halo = gaussian_kernel_radius(sigma);
-    let base_rows = height / strip_count;
-    let extra = height % strip_count;
-
-    let mut bounds = Vec::with_capacity(strip_count as usize);
-    let mut y = 0u32;
-    for i in 0..strip_count {
-        let rows = base_rows + u32::from(i < extra);
-        bounds.push((y, rows));
-        y += rows;
-    }
-
-    let bytes_per_row = width as usize * 3;
-    let strips: Vec<Vec<u8>> = bounds
-        .par_iter()
-        .map(|&(out_y, rows)| {
-            let top = out_y.saturating_sub(halo);
-            let bottom = (out_y + rows + halo).min(height);
-            let strip = image::imageops::crop_imm(image, 0, top, width, bottom - top).to_image();
-            let blurred = image::imageops::blur(&strip, sigma);
-            let raw = blurred.into_raw();
-            let skip = (out_y - top) as usize * bytes_per_row;
-            let take = rows as usize * bytes_per_row;
-            raw[skip..skip + take].to_vec()
-        })
-        .collect();
-
-    let mut out = Vec::with_capacity(width as usize * height as usize * 3);
-    for strip in &strips {
-        out.extend_from_slice(strip);
-    }
-    image::RgbImage::from_raw(width, height, out).expect("tiled blur output size must match")
 }
 
 pub fn create_stamp(led_size: u32, shape: &LedShape) -> Vec<f32> {
@@ -602,21 +636,84 @@ mod tests {
         assert_eq!(gaussian_kernel_radius(1.1), 2);
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     #[test]
-    fn tiled_blur_matches_scalar_blur() {
-        // Sizes chosen to hit strip boundaries, remainders and tiny images.
-        for (w, h) in [(3, 2), (5, 1), (16, 7), (64, 13), (96, 48)] {
+    fn blur_glow_properties() {
+        let config = glow_config();
+        let pipeline = LedPipeline::new(&config);
+        let (cw, ch) = pipeline.output_dimensions(16, 7);
+
+        // Black stays black through the blur.
+        let black = image::RgbImage::new(cw, ch);
+        let blurred = pipeline.blur_glow(&black, false).unwrap();
+        assert_eq!(blurred.dimensions(), (cw, ch));
+        assert!(blurred.as_raw().iter().all(|&b| b == 0));
+
+        // Dimensions are preserved across shapes, incl. tiny images, and
+        // the blur is deterministic.
+        for (w, h) in [(1, 1), (3, 2), (5, 1), (16, 7), (64, 13)] {
+            let canvas = gradient_image(w, h, 9);
+            let a = pipeline.blur_glow(&canvas, false).unwrap();
+            let b = pipeline.blur_glow(&canvas, false).unwrap();
+            assert_eq!(a.dimensions(), (w, h));
+            assert_eq!(a.as_raw(), b.as_raw());
+        }
+
+        // A single bright dot spreads light into its neighbourhood while
+        // distant pixels stay dark.
+        let mut dot = image::RgbImage::new(64, 64);
+        dot.put_pixel(32, 32, image::Rgb([255, 255, 255]));
+        let blurred = pipeline.blur_glow(&dot, false).unwrap();
+        let center = blurred.get_pixel(32, 32).0;
+        assert!(center[0] > 0, "blur must keep light at the source");
+        let far = blurred.get_pixel(0, 0).0;
+        assert_eq!(far, [0, 0, 0], "blur must not leak across the image");
+        let near: u32 = blurred.get_pixel(33, 32).0.iter().map(|&b| b as u32).sum();
+        assert!(near > 0, "blur must spread light to neighbours");
+    }
+
+    #[test]
+    fn blur_glow_stays_close_to_reference_blur() {
+        // Locks in the visual-equivalence property of the libblur backend:
+        // same sigma/kernel/edges as `image::imageops::blur` must keep
+        // per-channel drift within ±2.
+        let config = glow_config();
+        let pipeline = LedPipeline::new(&config);
+        for (w, h) in [(16, 7), (64, 13)] {
             let img = gradient_image(w, h, 9);
-            for sigma in [0.5, 1.0, 3.0, 5.5] {
-                let expected = image::imageops::blur(&img, sigma);
-                let got = blur_rgb_parallel(&img, sigma);
-                assert_eq!(
-                    got.as_raw(),
-                    expected.as_raw(),
-                    "tiled blur mismatch at {w}x{h} sigma={sigma}"
-                );
-            }
+            let got = pipeline.blur_glow(&img, false).unwrap();
+            let expected = image::imageops::blur(&img, config.glow_range);
+            assert_eq!(got.dimensions(), expected.dimensions());
+            let max_diff = got
+                .as_raw()
+                .iter()
+                .zip(expected.as_raw().iter())
+                .map(|(a, b)| a.abs_diff(*b))
+                .max()
+                .unwrap_or(0);
+            assert!(
+                max_diff <= 2,
+                "glow blur drifted too far from reference at {w}x{h}: max_abs_diff={max_diff}"
+            );
+        }
+    }
+
+    #[test]
+    fn blur_glow_parallel_matches_serial_shape() {
+        // Parallel/single policies may differ by rounding, but geometry and
+        // brightness conservation must hold for both.
+        let config = glow_config();
+        let pipeline = LedPipeline::new(&config);
+        let img = gradient_image(48, 32, 7);
+        for parallel in [false, true] {
+            let out = pipeline.blur_glow(&img, parallel).unwrap();
+            assert_eq!(out.dimensions(), img.dimensions());
+            let sum_in: u64 = img.as_raw().iter().map(|&b| b as u64).sum();
+            let sum_out: u64 = out.as_raw().iter().map(|&b| b as u64).sum();
+            let drift = sum_in.abs_diff(sum_out) as f64 / sum_in.max(1) as f64;
+            assert!(
+                drift < 0.05,
+                "blur must roughly conserve brightness (drift={drift})"
+            );
         }
     }
 }
