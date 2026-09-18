@@ -8,6 +8,7 @@ cli = ["clap"]
 
 [dependencies]
 image = "0.25.10"
+libblur = "0.24"
 rayon = "1.12.0"
 tiny-skia = "0.12.0"
 clap = { version = "4.4", features = ["derive"], optional = true }
